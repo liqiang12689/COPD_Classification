@@ -83,5 +83,5 @@ if __name__ == "__main__":
     # label_preprocess(label_path, output_path)
     data = load_datapath_label(data_root_path, output_path)
 
-    # data = data[648:652]
-    # print(data)
+    data = data[648:652]
+    print(data[0])
