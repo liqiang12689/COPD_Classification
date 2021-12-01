@@ -104,7 +104,7 @@ if __name__ == '__main__':
     label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
     data = load_datapath_label(data_root_path, label_path)
 
-    data =data[:100]
+    # data =data[600:800]
 
     # 训练数据与测试数据 7:3
     train_size = int(len(data) * 0.7)

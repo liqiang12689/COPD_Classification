@@ -58,7 +58,9 @@ def load_datapath_label(data_root_path, label_path):
                 for item in files:
                     if '.dcm' in item.lower():
                         image_path = os.path.join(root, item)
-                        data_path_with_label.append({'image_path': image_path, 'label': label_list['GOLDCLA'][i]})
+                        # 训练时预测的标签范围为[0,3]
+                        label = label_list['GOLDCLA'][i] - 1
+                        data_path_with_label.append({'image_path': image_path, 'label': label})
 
     return data_path_with_label
 
@@ -81,4 +83,5 @@ if __name__ == "__main__":
     # label_preprocess(label_path, output_path)
     data = load_datapath_label(data_root_path, output_path)
 
-    print(len(data))
+    # data = data[648:652]
+    # print(data)
