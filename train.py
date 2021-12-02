@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import random
 import torch
 from torch import nn
 from torch.autograd import Variable
@@ -19,7 +20,33 @@ def get_acc(output, label):
     return num_correct / total
 
 
-def train(net, use_gpu, train_data, valid_data, num_epochs, optimizer, criterion):
+def next_batch(batch_size, index_in_total, data):
+    start = index_in_total
+    index_in_total += batch_size
+    total_num = len(data)
+
+    # 最后一个batch
+    if total_num < index_in_total < total_num + batch_size:
+        index_in_total = total_num
+
+    end = index_in_total
+
+    batch_images = []
+    batch_labels = []
+
+    for i in range(start, end):
+        image_path = data[i]['image_path']
+        image = load_data(image_path)
+        batch_images.append(image)
+        # image = torch.tensor(image, dtype=torch.float)
+
+        label = data[i]['label']
+        batch_labels.append(label)
+
+    return batch_images, batch_labels, index_in_total
+
+
+def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimizer, criterion):
     prev_time = datetime.now()
 
     # use tensorboard
@@ -31,34 +58,31 @@ def train(net, use_gpu, train_data, valid_data, num_epochs, optimizer, criterion
     for epoch in range(num_epochs):
         train_loss = 0.0
         train_acc = 0
+        index_in_trainset = 0
+
         net = net.train()
 
-        for i in range(len(train_data)):
-            image_path = train_data[i]['image_path']
-            image = load_data(image_path)
-            image = torch.tensor(image, dtype=torch.float)
+        for batch in range(int(len(train_data) / batch_size) + 1):
 
-            label_int = train_data[i]['label']
-            label_list = []
-            label_list.append(label_int)
+            batch_images, batch_labels, index_in_trainset = next_batch(batch_size, index_in_trainset, train_data)
+            batch_images = torch.tensor(batch_images, dtype=torch.float)
 
             if use_gpu:
-                image = Variable(torch.tensor(image).cuda())
-                label = Variable(torch.tensor(label_list).cuda())
+                batch_images = Variable(torch.tensor(batch_images).cuda())
+                batch_labels = Variable(torch.tensor(batch_labels).cuda())
             else:
-                image = Variable(torch.tensor(image))
-                label = Variable(torch.tensor(label_list))
+                batch_images = Variable(torch.tensor(batch_images))
+                batch_labels = Variable(torch.tensor(batch_labels))
 
             optimizer.zero_grad()
-            output = net(image)
-            loss = criterion(output, label)
+            output = net(batch_images)
+            loss = criterion(output, batch_labels)
             loss = loss.requires_grad_()
             loss.backward()
             optimizer.step()
 
             train_loss += loss.data
-            train_acc += get_acc(output, label)
-            print("test train_acc:",train_acc)
+            train_acc += get_acc(output, batch_labels)
 
         cur_time = datetime.now()
         h, remainder = divmod((cur_time - prev_time).seconds, 3600)
@@ -68,29 +92,26 @@ def train(net, use_gpu, train_data, valid_data, num_epochs, optimizer, criterion
         if valid_data is not None:
             valid_loss = 0
             valid_acc = 0
+            index_in_validset = 0
             net = net.eval()
 
             with torch.no_grad():
-                for i in range(len(valid_data)):
-                    image_path = valid_data[i]['image_path']
-                    image = load_data(image_path)
-                    image = torch.tensor(image, dtype=torch.float)
+                for batch in range(int(len(valid_data) / batch_size) + 1):
 
-                    label_int = valid_data[i]['label']
-                    label_list = []
-                    label_list.append(label_int)
+                    batch_images, batch_labels, index_in_validset = next_batch(batch_size, index_in_validset,valid_data)
+                    batch_images = torch.tensor(batch_images, dtype=torch.float)
 
                     if use_gpu:
-                        image = Variable(torch.tensor(image).cuda())
-                        label = Variable(torch.tensor(label_list).cuda())
+                        batch_images = Variable(torch.tensor(batch_images).cuda())
+                        batch_labels = Variable(torch.tensor(batch_labels).cuda())
                     else:
-                        image = Variable(torch.tensor(image))
-                        label = Variable(torch.tensor(label_list))
+                        batch_images = Variable(torch.tensor(batch_images))
+                        batch_labels = Variable(torch.tensor(batch_labels))
 
-                    output = net(image)
-                    loss = criterion(output, label)
+                    output = net(batch_images)
+                    loss = criterion(output, batch_labels)
                     valid_loss += loss.data
-                    valid_acc += get_acc(output, label)
+                    valid_acc += get_acc(output, batch_labels)
 
             epoch_str = (
                     "Epoch %d. Train Loss: %f, Train Acc: %f, Valid Loss: %f, Valid Acc: %f, "
@@ -124,6 +145,10 @@ if __name__ == '__main__':
     label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
     data = load_datapath_label(data_root_path, label_path)
 
+    random.shuffle(data)
+
+    data = data[:10000]
+
     # 训练数据与测试数据 7:3
     train_size = int(len(data) * 0.7)
     train_data = data[:train_size]
@@ -133,10 +158,11 @@ if __name__ == '__main__':
     out_features = 4  # 4分类
     use_gpu = True
     pretrained = False  # 是否使用已训练模型
+    batch_size = 16
     num_epochs = 8
 
     net = densenet121(channels, out_features, use_gpu, pretrained)
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
     criterion = nn.CrossEntropyLoss()
 
-    train(net, use_gpu, train_data, valid_data, num_epochs, optimizer, criterion)
+    train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimizer, criterion)

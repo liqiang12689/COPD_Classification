@@ -69,8 +69,8 @@ def load_data(path):
     dicom_image = sitk.ReadImage(path)
     image_array = np.squeeze(sitk.GetArrayFromImage(dicom_image))
 
-    # TODO 参数化 batch size, channel, wide, high
-    reshape_image = np.reshape(image_array, (1, 1, 512, 512))
+    # channel, wide, high
+    reshape_image = np.reshape(image_array, (1, 512, 512))
 
     return reshape_image
 
