@@ -77,11 +77,12 @@ def load_data(path):
 
 if __name__ == "__main__":
     data_root_path = "/data/zengnanrong/CTDATA_test/"
+    # data_root_path = "/data/zengnanrong/CTDATA/"
 
     # label_path = os.path.join(data_root_path, 'label.xlsx')
     output_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
     # label_preprocess(label_path, output_path)
     data = load_datapath_label(data_root_path, output_path)
 
-    data = data[648:652]
+    # data = data[648:652]
     print(data[0])

@@ -29,7 +29,7 @@ def train(net, use_gpu, train_data, valid_data, num_epochs, optimizer, criterion
     writer = SummaryWriter(log_dir=os.path.join(LOG_DIR, 'densenet121', TIME_NOW))
 
     for epoch in range(num_epochs):
-        train_loss = 0
+        train_loss = 0.0
         train_acc = 0
         net = net.train()
 
@@ -58,6 +58,7 @@ def train(net, use_gpu, train_data, valid_data, num_epochs, optimizer, criterion
 
             train_loss += loss.data
             train_acc += get_acc(output, label)
+            print("test train_acc:",train_acc)
 
         cur_time = datetime.now()
         h, remainder = divmod((cur_time - prev_time).seconds, 3600)
@@ -104,6 +105,7 @@ def train(net, use_gpu, train_data, valid_data, num_epochs, optimizer, criterion
         writer.add_scalar('Train Loss', train_loss / len(train_data), epoch + 1)
         writer.add_scalar('Train Acc', train_acc / len(train_data), epoch + 1)
         if valid_data is not None:
+            writer.add_scalar('Valid loss', valid_loss / len(valid_data), epoch + 1)
             writer.add_scalar('Valid Acc', valid_acc / len(valid_data), epoch + 1)
 
         prev_time = cur_time
@@ -117,7 +119,8 @@ def train(net, use_gpu, train_data, valid_data, num_epochs, optimizer, criterion
 
 
 if __name__ == '__main__':
-    data_root_path = "/data/zengnanrong/CTDATA_test/"
+    # data_root_path = "/data/zengnanrong/CTDATA_test/"
+    data_root_path = "/data/zengnanrong/CTDATA/"
     label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
     data = load_datapath_label(data_root_path, label_path)
 
@@ -130,7 +133,7 @@ if __name__ == '__main__':
     out_features = 4  # 4分类
     use_gpu = True
     pretrained = False  # 是否使用已训练模型
-    num_epochs = 10
+    num_epochs = 8
 
     net = densenet121(channels, out_features, use_gpu, pretrained)
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
