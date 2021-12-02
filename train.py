@@ -38,7 +38,6 @@ def next_batch(batch_size, index_in_total, data):
         image_path = data[i]['image_path']
         image = load_data(image_path)
         batch_images.append(image)
-        # image = torch.tensor(image, dtype=torch.float)
 
         label = data[i]['label']
         batch_labels.append(label)
@@ -62,8 +61,12 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
 
         net = net.train()
 
-        for batch in range(int(len(train_data) / batch_size) + 1):
+        if len(train_data) % batch_size == 0:
+            batch_num = int(len(train_data) / batch_size)
+        else:
+            batch_num = int(len(train_data) / batch_size) + 1
 
+        for batch in range(batch_num):
             batch_images, batch_labels, index_in_trainset = next_batch(batch_size, index_in_trainset, train_data)
             batch_images = torch.tensor(batch_images, dtype=torch.float)
 
@@ -96,8 +99,12 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
             net = net.eval()
 
             with torch.no_grad():
-                for batch in range(int(len(valid_data) / batch_size) + 1):
+                if len(valid_data) % batch_size == 0:
+                    batch_num = int(len(valid_data) / batch_size)
+                else:
+                    batch_num = int(len(valid_data) / batch_size) + 1
 
+                for batch in range(batch_num):
                     batch_images, batch_labels, index_in_validset = next_batch(batch_size, index_in_validset,valid_data)
                     batch_images = torch.tensor(batch_images, dtype=torch.float)
 
@@ -143,11 +150,13 @@ if __name__ == '__main__':
     # data_root_path = "/data/zengnanrong/CTDATA_test/"
     data_root_path = "/data/zengnanrong/CTDATA/"
     label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
+
+    # len(data) = 255301
     data = load_datapath_label(data_root_path, label_path)
 
     random.shuffle(data)
 
-    data = data[:10000]
+    # data = data[:1000]
 
     # 训练数据与测试数据 7:3
     train_size = int(len(data) * 0.7)
@@ -158,8 +167,8 @@ if __name__ == '__main__':
     out_features = 4  # 4分类
     use_gpu = True
     pretrained = False  # 是否使用已训练模型
-    batch_size = 16
-    num_epochs = 8
+    batch_size = 20
+    num_epochs = 100
 
     net = densenet121(channels, out_features, use_gpu, pretrained)
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
