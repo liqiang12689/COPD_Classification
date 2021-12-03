@@ -13,13 +13,6 @@ from torch.utils.tensorboard import SummaryWriter
 from global_settings import CHECKPOINT_PATH, LOG_DIR, TIME_NOW
 
 
-def get_acc(output, label):
-    total = output.shape[0]
-    _, pred_label = output.max(1)
-    num_correct = pred_label.eq(label).sum()
-    return num_correct / total
-
-
 def next_batch(batch_size, index_in_total, data):
     start = index_in_total
     index_in_total += batch_size
@@ -85,7 +78,9 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
             optimizer.step()
 
             train_loss += loss.data
-            train_acc += get_acc(output, batch_labels)
+            _, pred_label = output.max(1)
+            num_correct = pred_label.eq(batch_labels).sum()
+            train_acc += num_correct
 
         cur_time = datetime.now()
         h, remainder = divmod((cur_time - prev_time).seconds, 3600)
@@ -105,7 +100,8 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
                     batch_num = int(len(valid_data) / batch_size) + 1
 
                 for batch in range(batch_num):
-                    batch_images, batch_labels, index_in_validset = next_batch(batch_size, index_in_validset,valid_data)
+                    batch_images, batch_labels, index_in_validset = next_batch(batch_size, index_in_validset,
+                                                                               valid_data)
                     batch_images = torch.tensor(batch_images, dtype=torch.float)
 
                     if use_gpu:
@@ -118,7 +114,9 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
                     output = net(batch_images)
                     loss = criterion(output, batch_labels)
                     valid_loss += loss.data
-                    valid_acc += get_acc(output, batch_labels)
+                    _, pred_label = output.max(1)
+                    num_correct = pred_label.eq(batch_labels).sum()
+                    valid_acc += num_correct
 
             epoch_str = (
                     "Epoch %d. Train Loss: %f, Train Acc: %f, Valid Loss: %f, Valid Acc: %f, "
@@ -156,7 +154,7 @@ if __name__ == '__main__':
 
     random.shuffle(data)
 
-    # data = data[:1000]
+    data = data[:1000]
 
     # 训练数据与测试数据 7:3
     train_size = int(len(data) * 0.7)
