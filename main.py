@@ -1,3 +1,6 @@
+"""
+功能测试代码
+"""
 import os
 import random
 
@@ -28,3 +31,33 @@ import SimpleITK as sitk
 # random.shuffle(list)
 #
 # print(list)
+
+
+# local_filename = "/data/zengnanrong/CTDATA/E0001001V1/E0001001V1FC03/1.2.392.200036.9116.2.5.1.48.1215508268.1254185772.683629.dcm"
+# # filename = os.path.split(local_filename)[1]
+# # filedir = os.path.split(local_filename)[0]
+# # print(filedir)
+# # print(filename)
+# input_root_path = "/data/zengnanrong/CTDATA/"
+# output_root_path = "/data/zengnanrong/R231/"
+# output = local_filename.replace(input_root_path, output_root_path)
+# print(output)
+
+from pathos.multiprocessing import ProcessingPool as Pool
+
+
+def test1(x, y, z):
+    print("x:%d, y:%s, z =%s" % (x, y, z))
+
+
+def test2(x):
+    print(x)
+
+
+x = [1, 2, 3, 4]
+y = ['y', 'y', 'y', 'y']
+z = ['y', 'y', 'y', 'y']
+pool = Pool()
+pool.map(test2, x)
+pool.close()
+pool.join()

@@ -76,8 +76,7 @@ def load_data(path):
 
 
 if __name__ == "__main__":
-    data_root_path = "/data/zengnanrong/CTDATA_test/"
-    # data_root_path = "/data/zengnanrong/CTDATA/"
+    data_root_path = "/data/zengnanrong/CTDATA/"
 
     # label_path = os.path.join(data_root_path, 'label.xlsx')
     output_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
