@@ -28,12 +28,13 @@ def next_batch(batch_size, index_in_total, data):
     batch_labels = []
 
     for i in range(start, end):
-        image_path = data[i]['image_path']
-        image = load_data(image_path)
-        batch_images.append(image)
+        if i < total_num:
+            image_path = data[i]['image_path']
+            image = load_data(image_path)
+            batch_images.append(image)
 
-        label = data[i]['label']
-        batch_labels.append(label)
+            label = data[i]['label']
+            batch_labels.append(label)
 
     return batch_images, batch_labels, index_in_total
 
