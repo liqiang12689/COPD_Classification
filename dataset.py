@@ -55,6 +55,8 @@ def load_datapath_label(data_root_path, label_path):
         if data_dir_name == label_list['subject'][i]:
             path = os.path.join(data_root_path, data_dir_name)
             for root, dirs, files in os.walk(path):
+                # TODO files上下裁剪1/6
+                # files.sort()
                 for item in files:
                     if '.dcm' in item.lower():
                         image_path = os.path.join(root, item)
@@ -67,26 +69,24 @@ def load_datapath_label(data_root_path, label_path):
 
 def load_data(path):
     dicom_image = sitk.ReadImage(path)
-    image_array = np.squeeze(sitk.GetArrayFromImage(dicom_image))
+    # image_array.shape = (1,512,512)
+    image_array = sitk.GetArrayFromImage(dicom_image)
 
-    # 读取lungmask UnetR231模型分割后的肺部区域标签图像
-    lungmask_path = path.replace('CTDATA', 'R231')
-    lungmask_image = sitk.ReadImage(lungmask_path)
-    lungmask_image_array = np.squeeze(sitk.GetArrayFromImage(lungmask_image))
+    # # 读取lungmask UnetR231模型分割后的肺部区域标签图像
+    # lungmask_path = path.replace('CTDATA', 'R231')
+    # lungmask_image = sitk.ReadImage(lungmask_path)
+    # lungmask_image_array = np.squeeze(sitk.GetArrayFromImage(lungmask_image))
 
-    height = image_array.shape[0]
-    width = image_array.shape[1]
+    # height = image_array.shape[0]
+    # width = image_array.shape[1]
 
-    for h in range(height):
-        for w in range(width):
-            if lungmask_image_array[h][w] == 0:
-                # 将非肺区域置0
-                image_array[h][w] = 0
+    # for h in range(height):
+    #     for w in range(width):
+    #         if lungmask_image_array[h][w] == 0:
+    #             # 将非肺区域置0
+    #             image_array[h][w] = 0
 
-    # channel, height, width
-    reshape_image = np.reshape(image_array, (1, height, width))
-
-    return reshape_image
+    return image_array
 
 
 if __name__ == "__main__":

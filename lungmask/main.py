@@ -112,18 +112,7 @@ def main(input, output, modelpath):
 #                     main(input, output, modelpath)
 
 
-def get_ct_dirs(root_path):
-    ct_dir = []
-    for item in os.listdir(root_path):
-        if os.path.isdir(os.path.join(root_path, item)):
-            ct_dir.append(item)
-
-    ct_dir.sort()
-
-    return ct_dir
-
-
-def segment_dcms(data_dir_name):
+def mask_dcms(data_dir_name):
     modelpath = '/home/MHISS/zengnanrong/COPD/checkpoint/unet_r231-d5d2fc3d.pth'
     input_root_path = "/data/zengnanrong/CTDATA/"
     output_root_path = "/data/zengnanrong/R231/"
@@ -137,12 +126,62 @@ def segment_dcms(data_dir_name):
                 main(input, output, modelpath)
 
 
+def get_ct_dirs(root_path):
+    ct_dir = []
+    for item in os.listdir(root_path):
+        if os.path.isdir(os.path.join(root_path, item)):
+            ct_dir.append(item)
+
+    ct_dir.sort()
+
+    return ct_dir
+
+
+def segement_dcms(data_dir_name):
+    ct_root_path = "/data/zengnanrong/CTDATA/"
+    mask_root_path = "/data/zengnanrong/R231/"
+    output_root_path = "/data/zengnanrong/LUNG_SEG/"
+
+    path = os.path.join(ct_root_path, data_dir_name)
+    for root, dirs, files in os.walk(path):
+        for item in files:
+            if '.dcm' in item.lower():
+                ct_path = os.path.join(root, item)
+                mask_path = ct_path.replace(ct_root_path, mask_root_path)
+
+                ct_image = sitk.ReadImage(ct_path)
+                ct_image_array = np.squeeze(sitk.GetArrayFromImage(ct_image))
+                mask_image = sitk.ReadImage(mask_path)
+                mask_image_array = np.squeeze(sitk.GetArrayFromImage(mask_image))
+
+                height = ct_image_array.shape[0]
+                width = ct_image_array.shape[1]
+
+                for h in range(height):
+                    for w in range(width):
+                        if mask_image_array[h][w] == 0:
+                            # 将非肺区域置0
+                            ct_image_array[h][w] = 0
+
+                seg_path = ct_path.replace(ct_root_path, output_root_path)
+                seg_dir = os.path.split(seg_path)[0]
+                if not os.path.exists(seg_dir):
+                    os.makedirs(seg_dir)
+
+                ct_image_array = np.reshape(ct_image_array, (1, height, width))
+                seg_image = sitk.GetImageFromArray(ct_image_array)
+                seg_image.CopyInformation(ct_image)
+                sitk.WriteImage(seg_image, seg_path)
+                logging.info(f'Save result to: {seg_path}')
+
+
 if __name__ == "__main__":
     input_root_path = "/data/zengnanrong/CTDATA/"
 
     ct_dir = get_ct_dirs(input_root_path)
 
-    pool = Pool(8)
-    pool.map(segment_dcms, ct_dir)
+    pool = Pool()
+    # pool.map(mask_dcms, ct_dir)
+    pool.map(segement_dcms, ct_dir)
     pool.close()
     pool.join()
