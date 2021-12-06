@@ -69,14 +69,32 @@ def load_data(path):
     dicom_image = sitk.ReadImage(path)
     image_array = np.squeeze(sitk.GetArrayFromImage(dicom_image))
 
-    # channel, wide, high
-    reshape_image = np.reshape(image_array, (1, 512, 512))
+    # 读取lungmask UnetR231模型分割后的肺部区域标签图像
+    lungmask_path = path.replace('CTDATA', 'R231')
+    lungmask_image = sitk.ReadImage(lungmask_path)
+    lungmask_image_array = np.squeeze(sitk.GetArrayFromImage(lungmask_image))
+
+    height = image_array.shape[0]
+    width = image_array.shape[1]
+
+    for h in range(height):
+        for w in range(width):
+            if lungmask_image_array[h][w] == 0:
+                # 将非肺区域置0
+                image_array[h][w] = 0
+
+    # channel, height, width
+    reshape_image = np.reshape(image_array, (1, height, width))
 
     return reshape_image
 
 
 if __name__ == "__main__":
-    data_root_path = "/data/zengnanrong/CTDATA/"
+    # 肺部CT原始图像
+    # data_root_path = "/data/zengnanrong/CTDATA/"
+
+    # 经过lungmask Unet-R231模型分割后的肺部区域标图像
+    data_root_path = "/data/zengnanrong/R231/"
 
     # label_path = os.path.join(data_root_path, 'label.xlsx')
     output_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
@@ -84,4 +102,4 @@ if __name__ == "__main__":
     data = load_datapath_label(data_root_path, output_path)
 
     # data = data[648:652]
-    print(data[0])
+    print(len(data))

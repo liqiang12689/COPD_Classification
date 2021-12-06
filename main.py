@@ -9,14 +9,31 @@ import numpy as np
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 
-# path = "/data/zengnanrong/CTDATA_test/E0001001V1/E0001001V1FC03/1.2.392.200036.9116.2.5.1.48.1215508268.1254185544.78233.dcm"
-#
-# image = sitk.ReadImage(path)
-# image_array = np.squeeze(sitk.GetArrayFromImage(image))
-# plt.imshow(image_array)
-# plt.show()
-#
-# print(image_array.shape)
+path = "/data/zengnanrong/CTDATA/E0001001V1/E0001001V1FC03/1.2.392.200036.9116.2.5.1.48.1215508268.1254185734.309395.dcm"
+
+image = sitk.ReadImage(path)
+image_array = np.squeeze(sitk.GetArrayFromImage(image))
+plt.imshow(image_array)
+plt.show()
+
+lungmask_path = path.replace('CTDATA', 'R231')
+lungmask_image = sitk.ReadImage(lungmask_path)
+lungmask_image_array = np.squeeze(sitk.GetArrayFromImage(lungmask_image))
+
+plt.imshow(lungmask_image_array)
+plt.show()
+
+height = image_array.shape[0]
+width = image_array.shape[1]
+
+for h in range(height):
+    for w in range(width):
+        if lungmask_image_array[h][w] == 0:
+            # 将非肺区域置0
+            image_array[h][w] = 0
+
+plt.imshow(image_array)
+plt.show()
 
 # list = []
 # list.append({'key_1': 1, 'key_2': 'a'})
@@ -42,22 +59,22 @@ import SimpleITK as sitk
 # output_root_path = "/data/zengnanrong/R231/"
 # output = local_filename.replace(input_root_path, output_root_path)
 # print(output)
-
-from pathos.multiprocessing import ProcessingPool as Pool
-
-
-def test1(x, y, z):
-    print("x:%d, y:%s, z =%s" % (x, y, z))
-
-
-def test2(x):
-    print(x)
-
-
-x = [1, 2, 3, 4]
-y = ['y', 'y', 'y', 'y']
-z = ['y', 'y', 'y', 'y']
-pool = Pool()
-pool.map(test2, x)
-pool.close()
-pool.join()
+#
+# from pathos.multiprocessing import ProcessingPool as Pool
+#
+#
+# def test1(x, y, z):
+#     print("x:%d, y:%s, z =%s" % (x, y, z))
+#
+#
+# def test2(x):
+#     print(x)
+#
+#
+# x = [1, 2, 3, 4]
+# y = ['y', 'y', 'y', 'y']
+# z = ['y', 'y', 'y', 'y']
+# pool = Pool()
+# pool.map(test2, x)
+# pool.close()
+# pool.join()
