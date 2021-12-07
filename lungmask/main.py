@@ -86,32 +86,6 @@ def main(input, output, modelpath):
     sitk.WriteImage(result_out, output)
 
 
-# def segment_dicoms(input_root_path, output_root_path, modelpath):
-#     """
-#     将input_root_path中各个文件夹中的dcm图像进行肺分割，并将分割结果按原路径格式放到output_root_path中
-#     :param input_root_path:
-#     :param output_root_path:
-#     :param modelpath:
-#     :return:
-#     """
-#     ct_dir = []
-#     for item in os.listdir(input_root_path):
-#         if os.path.isdir(os.path.join(input_root_path, item)):
-#             ct_dir.append(item)
-#
-#     ct_dir.sort()
-#
-#     for i in range(len(ct_dir)):
-#         data_dir_name = ct_dir[i]
-#         path = os.path.join(input_root_path, data_dir_name)
-#         for root, dirs, files in os.walk(path):
-#             for item in files:
-#                 if '.dcm' in item.lower():
-#                     input = os.path.join(root, item)
-#                     output = input.replace(input_root_path, output_root_path)
-#                     main(input, output, modelpath)
-
-
 def mask_dcms(data_dir_name):
     modelpath = '/home/MHISS/zengnanrong/COPD/checkpoint/unet_r231-d5d2fc3d.pth'
     input_root_path = "/data/zengnanrong/CTDATA/"

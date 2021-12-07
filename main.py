@@ -4,17 +4,19 @@
 import os
 import random
 
+from numpy import shape
+
 import utils
 import numpy as np
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 
-path = "/data/zengnanrong/LUNG_SEG/E0001001V1/E0001001V1FC03/1.2.392.200036.9116.2.5.1.48.1215508268.1254185734.309395.dcm"
-
-image = sitk.ReadImage(path)
-image_array = np.squeeze(sitk.GetArrayFromImage(image))
-plt.imshow(image_array)
-plt.show()
+# path = "/data/zengnanrong/LUNG_SEG/E0001001V1/E0001001V1FC03/1.2.392.200036.9116.2.5.1.48.1215508268.1254185734.309395.dcm"
+#
+# image = sitk.ReadImage(path)
+# image_array = np.squeeze(sitk.GetArrayFromImage(image))
+# plt.imshow(image_array)
+# plt.show()
 #
 # lungmask_path = path.replace('CTDATA', 'R231')
 # lungmask_image = sitk.ReadImage(lungmask_path)
