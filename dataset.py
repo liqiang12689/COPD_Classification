@@ -55,8 +55,11 @@ def load_datapath_label(data_root_path, label_path):
         if data_dir_name == label_list['subject'][i]:
             path = os.path.join(data_root_path, data_dir_name)
             for root, dirs, files in os.walk(path):
-                # TODO files上下裁剪1/6
-                # files.sort()
+                files.sort()
+                cut_index_head = int(len(files) / 6)
+                cut_index_rear = cut_index_head * 5
+                # 忽略上下1/6,截取主要包含肺区域的图像
+                files = files[cut_index_head:cut_index_rear]
                 for item in files:
                     if '.dcm' in item.lower():
                         image_path = os.path.join(root, item)
@@ -85,10 +88,7 @@ if __name__ == "__main__":
     # 分割后的肺部CT图像
     data_root_path = "/data/zengnanrong/LUNG_SEG/"
 
-    # label_path = os.path.join(data_root_path, 'label.xlsx')
-    output_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
-    # label_preprocess(label_path, output_path)
-    data = load_datapath_label(data_root_path, output_path)
+    label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
+    data = load_datapath_label(data_root_path, label_path)
 
-    # data = data[648:652]
     print(len(data))

@@ -136,6 +136,7 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
         writer.add_scalar('Valid Acc', valid_acc / len(valid_data), epoch + 1)
 
         if valid_acc / len(valid_data) > max_vail_acc:
+            max_vail_acc = valid_acc / len(valid_data)
             torch.save(net, os.path.join(CHECKPOINT_PATH, 'densenet121.pkl'))
 
         prev_time = cur_time
@@ -173,7 +174,6 @@ def test(use_gpu, test_data, batch_size):
                 batch_labels = Variable(torch.tensor(batch_labels))
 
             output = net(batch_images)
-            # TODO 存入概率到excel文件
             softmax = nn.Softmax(dim=1)
             output_softmax = softmax(output)
 
@@ -190,7 +190,7 @@ def test(use_gpu, test_data, batch_size):
         df = pd.DataFrame(outpres_list, columns=['p0', 'p1', 'p2', 'p3'])
         df.insert(df.shape[1], 'label-pre', prelabels_list)
         df.insert(df.shape[1], 'label_gt', label_list)
-        df.to_excel("test.xlsx", index=False)
+        df.to_excel("./result/test.xlsx", index=False)
 
 
 if __name__ == '__main__':
@@ -198,12 +198,11 @@ if __name__ == '__main__':
     data_root_path = "/data/zengnanrong/LUNG_SEG/"
     label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
 
-    # len(data) = 255301
     data = load_datapath_label(data_root_path, label_path)
 
     random.shuffle(data)
 
-    # data = data[:100]
+    # data = data[:200]
 
     # 训练集：验证集：测试集 6:2:2
     train_index = int(len(data) * 0.6)
