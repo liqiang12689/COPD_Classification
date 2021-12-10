@@ -30,11 +30,12 @@ def label_preprocess(label_path, output_path):
     pd.DataFrame(label_data).to_excel(os.path.join(output_path), sheet_name='Sheet1')
 
 
-def load_datapath_label(data_root_path, label_path):
+def load_datapath_label(data_root_path, label_path, cut):
     """
     加载每一张DICOM图像的路径，并为其加上对应标签
     :param data_root_path:
     :param label_path:
+    :param cut: 是否忽略上下1/6,截取主要包含肺区域的图像
     :return:
     """
     ct_dir = []
@@ -47,7 +48,7 @@ def load_datapath_label(data_root_path, label_path):
 
     label_list = pd.read_excel(os.path.join(label_path), sheet_name='Sheet1')
 
-    data_path_with_label = []
+    data_path_with_label = [[], [], [], []]
 
     for i in range(len(ct_dir)):
         data_dir_name = ct_dir[i]
@@ -55,17 +56,19 @@ def load_datapath_label(data_root_path, label_path):
         if data_dir_name == label_list['subject'][i]:
             path = os.path.join(data_root_path, data_dir_name)
             for root, dirs, files in os.walk(path):
-                files.sort()
-                cut_index_head = int(len(files) / 6)
-                cut_index_rear = cut_index_head * 5
-                # 忽略上下1/6,截取主要包含肺区域的图像
-                files = files[cut_index_head:cut_index_rear]
+                if cut:
+                    files.sort()
+                    cut_index_head = int(len(files) / 6)
+                    cut_index_rear = cut_index_head * 5
+                    # 忽略上下1/6,截取主要包含肺区域的图像
+                    files = files[cut_index_head:cut_index_rear]
+
                 for item in files:
                     if '.dcm' in item.lower():
                         image_path = os.path.join(root, item)
                         # 训练时预测的标签范围为[0,3]
                         label = label_list['GOLDCLA'][i] - 1
-                        data_path_with_label.append({'image_path': image_path, 'label': label})
+                        data_path_with_label[label].append({'image_path': image_path, 'label': label})
 
     return data_path_with_label
 

@@ -3,8 +3,9 @@ import pandas as pd
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
-diabetes = pd.read_excel('./result/test.xlsx')
-# diabetes = pd.read_excel('test_seg_15epoch.xlsx')
+diabetes = pd.read_excel('./result/test_15epoch.xlsx')
+# diabetes = pd.read_excel('./result/test_seg_15epoch.xlsx')
+# diabetes = pd.read_excel('./result/test_seg_15epoch_cut6.xlsx')
 fact = diabetes['label_gt']
 guess = diabetes['label-pre']
 

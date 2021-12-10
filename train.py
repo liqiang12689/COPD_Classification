@@ -54,6 +54,7 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
         os.makedirs(CHECKPOINT_PATH)
 
     for epoch in range(num_epochs):
+        random.shuffle(train_data)
         train_loss = 0.0
         train_acc = 0
         index_in_trainset = 0
@@ -194,22 +195,28 @@ def test(use_gpu, test_data, batch_size):
 
 
 if __name__ == '__main__':
-    # data_root_path = "/data/zengnanrong/CTDATA/"
-    data_root_path = "/data/zengnanrong/LUNG_SEG/"
+    data_root_path = "/data/zengnanrong/CTDATA/"
+    # data_root_path = "/data/zengnanrong/LUNG_SEG/"
     label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
 
-    data = load_datapath_label(data_root_path, label_path)
+    # 是否忽略上下1/6,截取主要包含肺区域的图像
+    cut = False
 
-    random.shuffle(data)
+    data = load_datapath_label(data_root_path, label_path, cut)
+    train_data = []
+    valid_data = []
+    test_data = []
 
-    # data = data[:200]
+    for label in range(4):
+        random.shuffle(data[label])
 
-    # 训练集：验证集：测试集 6:2:2
-    train_index = int(len(data) * 0.6)
-    valid_index = int(len(data) * 0.8)
-    train_data = data[:train_index]
-    test_data = data[train_index:valid_index]
-    test_data = data[valid_index:]
+        # 每个标签的数据按 训练集：验证集：测试集 6:2:2
+        train_index = int(len(data[label]) * 0.6)
+        valid_index = int(len(data[label]) * 0.8)
+
+        train_data.extend(data[label][:train_index])
+        valid_data.extend(data[label][train_index:valid_index])
+        test_data.extend(data[label][valid_index:])
 
     channels = 1
     out_features = 4  # 4分类
@@ -222,5 +229,5 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
     criterion = nn.CrossEntropyLoss()
 
-    train(net, use_gpu, train_data, test_data, batch_size, num_epochs, optimizer, criterion)
+    train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimizer, criterion)
     test(use_gpu, test_data, batch_size)

@@ -11,6 +11,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 
+# data_path_with_label = [[], [], [], []]
+#
+# for i in range(4):
+#     data_path_with_label[i].append({'image_path': "image_path_1", 'label': 1})
+#     data_path_with_label[i].append({'image_path': "image_path_2", 'label': 2})
+#
+# print(data_path_with_label[0])
+# print(data_path_with_label[0][0]['label'])
+
 # path = "/data/zengnanrong/LUNG_SEG/E0001001V1/E0001001V1FC03/1.2.392.200036.9116.2.5.1.48.1215508268.1254185734.309395.dcm"
 #
 # image = sitk.ReadImage(path)
