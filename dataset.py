@@ -30,10 +30,10 @@ def label_preprocess(label_path, output_path):
     pd.DataFrame(label_data).to_excel(os.path.join(output_path), sheet_name='Sheet1')
 
 
-def exist_lung(image):
-    image_array = image[0]
-    # 肺部区域从图像的中间开始出现，可以从第100行开始扫
-    for x in range(100, len(image_array[0])):
+def exist_lung(image_path):
+    image = sitk.ReadImage(image_path)
+    image_array = np.squeeze(sitk.GetArrayFromImage(image))
+    for x in range(len(image_array[0])):
         for y in range(len(image_array[1])):
             if image_array[x][y] > 0:
                 return True
@@ -72,16 +72,14 @@ def find_lung_range(label_path, data_root_path, output_path):
                 files.sort()
                 for appear_index in range(len_files):
                     image_path = os.path.join(root, files[appear_index])
-                    image_array = load_data(image_path)
-                    if exist_lung(image_array):
+                    if exist_lung(image_path):
                         lung_appear_index_list.append(appear_index)
                         print("appear:%s  /  %d" % (data_dir_name, appear_index))
                         break
                 for index in range(len_files):
                     disappear_index = len_files - 1 - index
                     image_path = os.path.join(root, files[disappear_index])
-                    image_array = load_data(image_path)
-                    if exist_lung(image_array):
+                    if exist_lung(image_path):
                         lung_disappear_index_list.append(disappear_index)
                         print("disappear:%s  /  %d" % (data_dir_name, disappear_index))
                         break

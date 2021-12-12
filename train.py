@@ -1,6 +1,6 @@
 import os
+import sys
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import pandas as pd
 import random
 import torch
@@ -12,6 +12,8 @@ from models.densenet import densenet121
 
 from torch.utils.tensorboard import SummaryWriter
 from global_settings import CHECKPOINT_PATH, LOG_DIR, TIME_NOW
+
+import argparse
 
 
 def next_batch(batch_size, index_in_total, data):
@@ -40,7 +42,7 @@ def next_batch(batch_size, index_in_total, data):
     return batch_images, batch_labels, index_in_total
 
 
-def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimizer, criterion):
+def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimizer, criterion, save_model_name):
     prev_time = datetime.now()
 
     # use tensorboard
@@ -139,7 +141,7 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
 
         if valid_acc / len(valid_data) > max_vail_acc:
             max_vail_acc = valid_acc / len(valid_data)
-            torch.save(net, os.path.join(CHECKPOINT_PATH, 'densenet121.pkl'))
+            torch.save(net, os.path.join(CHECKPOINT_PATH, save_model_name))
 
         prev_time = cur_time
         print(epoch_str + time_str)
@@ -147,14 +149,14 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
     writer.close()
 
 
-def test(use_gpu, test_data, batch_size):
+def test(use_gpu, test_data, batch_size, save_model_name, result_file):
     test_acc = 0
     index_in_testset = 0
     label_list = []
     outpres_list = []
     prelabels_list = []
 
-    net = torch.load(os.path.join(CHECKPOINT_PATH, 'densenet121.pkl'))
+    net = torch.load(os.path.join(CHECKPOINT_PATH, save_model_name))
     net = net.eval()
 
     with torch.no_grad():
@@ -193,20 +195,28 @@ def test(use_gpu, test_data, batch_size):
         df.insert(df.shape[1], 'label-pre', prelabels_list)
         df.insert(df.shape[1], 'label_gt', label_list)
         # df.to_excel("./result/test_cut6_25epoch.xlsx", index=False)
-        df.to_excel("./result/test_seg_cut6_25epoch.xlsx", index=False)
+        df.to_excel(result_file, index=False)
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_root_path', type=str, help='输入数据的根路径')
+    parser.add_argument('--cut', type=bool, help='是否只截取含肺区域图像')
+    parser.add_argument('--use_gpu', type=bool, help='是否只截取含肺区域图像')
+    parser.add_argument('--batch_size', type=int, help='batch size')
+    parser.add_argument('--num_epochs', type=int, help='num of epochs')
+    parser.add_argument('--save_model_name', type=str, help='model save name')
+    parser.add_argument('--result_file', type=str, help='test result file path')
+    parser.add_argument('--cuda_device', type=str, help='CUDA_VISIBLE_DEVICES')
 
-    # TODO 使用argparse
+    argsin = sys.argv[1:]
+    args = parser.parse_args(argsin)
+
     # data_root_path = "/data/zengnanrong/CTDATA/"
-    data_root_path = "/data/zengnanrong/LUNG_SEG/"
-    label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
+    # data_root_path = "/data/zengnanrong/LUNG_SEG/"
+    label_path = os.path.join(args.data_root_path, 'label_match_ct_4_range.xlsx')
 
-    # 是否忽略上下1/6,截取主要包含肺区域的图像
-    cut = True
-
-    data = load_datapath_label(data_root_path, label_path, cut)
+    data = load_datapath_label(args.data_root_path, label_path, args.cut)
     train_data = []
     valid_data = []
     test_data = []
@@ -214,9 +224,9 @@ if __name__ == '__main__':
     for label in range(4):
         random.shuffle(data[label])
 
-        # 每个标签的数据按 训练集：验证集：测试集 6:2:2
+        # 每个标签的数据按 训练集：验证集：测试集 6:1:3
         train_index = int(len(data[label]) * 0.6)
-        valid_index = int(len(data[label]) * 0.8)
+        valid_index = int(len(data[label]) * 0.7)
 
         train_data.extend(data[label][:train_index])
         valid_data.extend(data[label][train_index:valid_index])
@@ -224,14 +234,17 @@ if __name__ == '__main__':
 
     channels = 1
     out_features = 4  # 4分类
-    use_gpu = True
+    # use_gpu = True
     pretrained = False  # 是否使用已训练模型
-    batch_size = 20
-    num_epochs = 25
+    # batch_size = 20
+    # num_epochs = 25
 
-    net = densenet121(channels, out_features, use_gpu, pretrained)
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.cuda_device
+
+    net = densenet121(channels, out_features, args.use_gpu, pretrained)
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
     criterion = nn.CrossEntropyLoss()
 
-    train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimizer, criterion)
-    test(use_gpu, test_data, batch_size)
+    train(net, args.use_gpu, train_data, valid_data, args.batch_size, args.num_epochs, optimizer, criterion,
+          args.save_model_name)
+    test(args.use_gpu, test_data, args.batch_size, args.save_model_name, args.result_file)

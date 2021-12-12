@@ -6,7 +6,6 @@ import random
 
 from numpy import shape
 
-import utils
 import numpy as np
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
