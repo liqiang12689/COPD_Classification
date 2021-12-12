@@ -1,5 +1,6 @@
 import os
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import pandas as pd
 import random
 import torch
@@ -191,16 +192,19 @@ def test(use_gpu, test_data, batch_size):
         df = pd.DataFrame(outpres_list, columns=['p0', 'p1', 'p2', 'p3'])
         df.insert(df.shape[1], 'label-pre', prelabels_list)
         df.insert(df.shape[1], 'label_gt', label_list)
-        df.to_excel("./result/test.xlsx", index=False)
+        # df.to_excel("./result/test_cut6_25epoch.xlsx", index=False)
+        df.to_excel("./result/test_seg_cut6_25epoch.xlsx", index=False)
 
 
 if __name__ == '__main__':
-    data_root_path = "/data/zengnanrong/CTDATA/"
-    # data_root_path = "/data/zengnanrong/LUNG_SEG/"
+
+    # TODO 使用argparse
+    # data_root_path = "/data/zengnanrong/CTDATA/"
+    data_root_path = "/data/zengnanrong/LUNG_SEG/"
     label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
 
     # 是否忽略上下1/6,截取主要包含肺区域的图像
-    cut = False
+    cut = True
 
     data = load_datapath_label(data_root_path, label_path, cut)
     train_data = []
@@ -223,7 +227,7 @@ if __name__ == '__main__':
     use_gpu = True
     pretrained = False  # 是否使用已训练模型
     batch_size = 20
-    num_epochs = 15
+    num_epochs = 25
 
     net = densenet121(channels, out_features, use_gpu, pretrained)
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
