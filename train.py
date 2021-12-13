@@ -194,7 +194,6 @@ def test(use_gpu, test_data, batch_size, save_model_name, result_file):
         df = pd.DataFrame(outpres_list, columns=['p0', 'p1', 'p2', 'p3'])
         df.insert(df.shape[1], 'label-pre', prelabels_list)
         df.insert(df.shape[1], 'label_gt', label_list)
-        # df.to_excel("./result/test_cut6_25epoch.xlsx", index=False)
         df.to_excel(result_file, index=False)
 
 
@@ -212,8 +211,6 @@ if __name__ == '__main__':
     argsin = sys.argv[1:]
     args = parser.parse_args(argsin)
 
-    # data_root_path = "/data/zengnanrong/CTDATA/"
-    # data_root_path = "/data/zengnanrong/LUNG_SEG/"
     label_path = os.path.join(args.data_root_path, 'label_match_ct_4_range.xlsx')
 
     data = load_datapath_label(args.data_root_path, label_path, args.cut)
@@ -234,10 +231,7 @@ if __name__ == '__main__':
 
     channels = 1
     out_features = 4  # 4分类
-    # use_gpu = True
     pretrained = False  # 是否使用已训练模型
-    # batch_size = 20
-    # num_epochs = 25
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.cuda_device
 
@@ -248,3 +242,41 @@ if __name__ == '__main__':
     train(net, args.use_gpu, train_data, valid_data, args.batch_size, args.num_epochs, optimizer, criterion,
           args.save_model_name)
     test(args.use_gpu, test_data, args.batch_size, args.save_model_name, args.result_file)
+
+"""
+方案一：不处理数据
+ nohup python train.py \
+ --data_root_path /data/zengnanrong/CTDATA/ \
+ --cut False \
+ --use_gpu True \
+ --batch_size 20 \
+ --num_epochs 30 \
+ --save_model_name DenseNet121_30epoch.pkl \
+ --result_file ./result/test_30epoch.xlsx \
+ --cuda_device 1 \
+ > out_30epoch.log &
+ 
+ 方案二：删去非肺区域的图像
+  nohup python train.py \
+ --data_root_path /data/zengnanrong/CTDATA/ \
+ --cut True \
+ --use_gpu True \
+ --batch_size 20 \
+ --num_epochs 30 \
+ --save_model_name DenseNet121_cut_30epoch.pkl \
+ --result_file ./result/test_cut_30epoch.xlsx \
+ --cuda_device 0 \
+ > out_cut_30epoch.log &
+ 
+ 方案三：提取肺实质图像
+  nohup python train.py \
+ --data_root_path /data/zengnanrong/LUNG_SEG/ \
+ --cut True \
+ --use_gpu True \
+ --batch_size 20 \
+ --num_epochs 30 \
+ --save_model_name DenseNet121_seg_cut_30epoch.pkl \
+ --result_file ./result/test_seg_cut_30epoch.xlsx \
+ --cuda_device 1 \
+ > out_seg_cut_30epoch.log &
+"""

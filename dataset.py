@@ -33,7 +33,7 @@ def label_preprocess(label_path, output_path):
 def exist_lung(image_path):
     image = sitk.ReadImage(image_path)
     image_array = np.squeeze(sitk.GetArrayFromImage(image))
-    for x in range(len(image_array[0])):
+    for x in range(100, len(image_array[0])):
         for y in range(len(image_array[1])):
             if image_array[x][y] > 0:
                 return True
@@ -55,14 +55,13 @@ def find_lung_range(label_path, data_root_path, output_path):
     # 确保与label文件中的名称顺序对应
     ct_dir.sort()
 
-    label_list = pd.read_excel(os.path.join(label_path), sheet_name='Sheet1')
-
-    lung_appear_index_list = []
-    lung_disappear_index_list = []
+    label_df = pd.read_excel(os.path.join(label_path), sheet_name='Sheet1')
+    label_df.insert(label_df.shape[1], 'appear_index', 0)
+    label_df.insert(label_df.shape[1], 'disappear_index', 0)
 
     for i in range(len(ct_dir)):
         data_dir_name = ct_dir[i]
-        if data_dir_name == label_list['subject'][i]:
+        if data_dir_name == label_df['subject'][i]:
             path = os.path.join(data_root_path, data_dir_name)
             for root, dirs, files in os.walk(path):
                 if len(files) == 0:
@@ -73,21 +72,16 @@ def find_lung_range(label_path, data_root_path, output_path):
                 for appear_index in range(len_files):
                     image_path = os.path.join(root, files[appear_index])
                     if exist_lung(image_path):
-                        lung_appear_index_list.append(appear_index)
-                        print("appear:%s  /  %d" % (data_dir_name, appear_index))
+                        label_df['appear_index'][i] = appear_index
                         break
                 for index in range(len_files):
                     disappear_index = len_files - 1 - index
                     image_path = os.path.join(root, files[disappear_index])
                     if exist_lung(image_path):
-                        lung_disappear_index_list.append(disappear_index)
-                        print("disappear:%s  /  %d" % (data_dir_name, disappear_index))
+                        label_df['disappear_index'][i] = disappear_index
                         break
 
-    df = pd.DataFrame(label_list)
-    df.insert(df.shape[1], 'appear_index', lung_appear_index_list)
-    df.insert(df.shape[1], 'disappear_index', lung_disappear_index_list)
-    df.to_excel(output_path, index=False)
+    label_df.to_excel(output_path, index=False)
 
 
 def load_datapath_label(data_root_path, label_path, cut):
@@ -95,7 +89,7 @@ def load_datapath_label(data_root_path, label_path, cut):
     加载每一张DICOM图像的路径，并为其加上对应标签
     :param data_root_path:
     :param label_path:
-    :param cut: 是否忽略上下1/6,截取主要包含肺区域的图像
+    :param cut: 是否截取包含肺区域的图像
     :return:
     """
     ct_dir = []
@@ -119,9 +113,6 @@ def load_datapath_label(data_root_path, label_path, cut):
                 if cut:
                     files.sort()
                     # TODO
-
-                    # 忽略上下1/6,截取主要包含肺区域的图像
-                    # files = files[cut_index_head:cut_index_rear]
 
                 for item in files:
                     if '.dcm' in item.lower():
@@ -153,5 +144,9 @@ if __name__ == "__main__":
     output_path = os.path.join(data_root_path, 'label_match_ct_4_range.xlsx')
 
     find_lung_range(label_path, data_root_path, output_path)
-    # data = load_datapath_label(data_root_path, label_path)
-    # print(len(data))
+    # data = load_datapath_label(data_root_path, label_path, False)
+    # print(len(data[0]))
+    # print(len(data[1]))
+    # print(len(data[2]))
+    # print(len(data[3]))
+    # print(len(data[0])+len(data[1])+len(data[2])+len(data[3]))
