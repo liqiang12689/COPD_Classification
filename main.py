@@ -10,6 +10,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 
+# import pandas as pd
+# data_root_path = "/data/zengnanrong/CTDATA/"
+# label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
+# output_path = os.path.join(data_root_path, 'label_match_ct_4_1496v2.xlsx')
+# ct_dir = []
+# for item in os.listdir(data_root_path):
+#     if os.path.isdir(os.path.join(data_root_path, item)):
+#         ct_dir.append(item)
+#
+# # 确保与label文件中的名称顺序对应
+# ct_dir.sort()
+#
+# label_df = pd.read_excel(os.path.join(label_path), sheet_name='Sheet1')
+# label_df.insert(label_df.shape[1], 'appear_index', ct_dir)
+# label_df.to_excel(output_path, index=False)
+
 # data_path_with_label = [[], [], [], []]
 #
 # for i in range(4):
@@ -19,7 +35,7 @@ import SimpleITK as sitk
 # print(data_path_with_label[0])
 # print(data_path_with_label[0][0]['label'])
 
-# path = "/data/zengnanrong/LUNG_SEG/E0001001V1/E0001001V1FC03/1.2.392.200036.9116.2.5.1.48.1215508268.1254185734.309395.dcm"
+# path = "/data/zengnanrong/R231/E0001524V2/E0001524V2FC01/1.2.392.200036.9116.2.5.1.48.1215508268.1324612419.245679.dcm"
 #
 # image = sitk.ReadImage(path)
 # image_array = np.squeeze(sitk.GetArrayFromImage(image))

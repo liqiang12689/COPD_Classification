@@ -254,7 +254,7 @@ if __name__ == '__main__':
  --save_model_name DenseNet121_30epoch.pkl \
  --result_file ./result/test_30epoch.xlsx \
  --cuda_device 1 \
- > out_30epoch.log &
+ > ./log/out_30epoch.log &
  
  方案二：删去非肺区域的图像
   nohup python train.py \
@@ -266,7 +266,7 @@ if __name__ == '__main__':
  --save_model_name DenseNet121_cut_30epoch.pkl \
  --result_file ./result/test_cut_30epoch.xlsx \
  --cuda_device 0 \
- > out_cut_30epoch.log &
+ > ./log/out_cut_30epoch.log &
  
  方案三：提取肺实质图像
   nohup python train.py \
@@ -278,5 +278,5 @@ if __name__ == '__main__':
  --save_model_name DenseNet121_seg_cut_30epoch.pkl \
  --result_file ./result/test_seg_cut_30epoch.xlsx \
  --cuda_device 1 \
- > out_seg_cut_30epoch.log &
+ > ./log/out_seg_cut_30epoch.log &
 """

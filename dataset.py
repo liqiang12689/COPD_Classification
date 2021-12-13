@@ -72,12 +72,14 @@ def find_lung_range(label_path, data_root_path, output_path):
                 for appear_index in range(len_files):
                     image_path = os.path.join(root, files[appear_index])
                     if exist_lung(image_path):
+                        print(i)
                         label_df['appear_index'][i] = appear_index
                         break
                 for index in range(len_files):
                     disappear_index = len_files - 1 - index
                     image_path = os.path.join(root, files[disappear_index])
                     if exist_lung(image_path):
+                        print(i)
                         label_df['disappear_index'][i] = disappear_index
                         break
 
@@ -100,25 +102,34 @@ def load_datapath_label(data_root_path, label_path, cut):
     # 确保与label文件中的名称顺序对应
     ct_dir.sort()
 
-    label_list = pd.read_excel(os.path.join(label_path), sheet_name='Sheet1')
+    label_df = pd.read_excel(os.path.join(label_path), sheet_name='Sheet1')
 
     data_path_with_label = [[], [], [], []]
 
     for i in range(len(ct_dir)):
         data_dir_name = ct_dir[i]
 
-        if data_dir_name == label_list['subject'][i]:
+        if data_dir_name == label_df['subject'][i]:
             path = os.path.join(data_root_path, data_dir_name)
             for root, dirs, files in os.walk(path):
+                if len(files) == 0:
+                    continue
                 if cut:
                     files.sort()
-                    # TODO
+                    appear_idx = label_df['appear_index'][i]
+                    disappear_idx = label_df['disappear_index'][i]
+
+                    if '.xml' in files[0].lower():
+                        appear_idx = appear_idx + 1
+                        disappear_idx = disappear_idx + 1
+
+                    files = files[appear_idx:disappear_idx + 1]
 
                 for item in files:
                     if '.dcm' in item.lower():
                         image_path = os.path.join(root, item)
                         # 训练时预测的标签范围为[0,3]
-                        label = label_list['GOLDCLA'][i] - 1
+                        label = label_df['GOLDCLA'][i] - 1
                         data_path_with_label[label].append({'image_path': image_path, 'label': label})
 
     return data_path_with_label
@@ -135,18 +146,22 @@ def load_data(path):
 if __name__ == "__main__":
     # 肺部CT原始图像
     # data_root_path = "/data/zengnanrong/CTDATA/"
+    # label_path = os.path.join(data_root_path, 'label.xlsx')
+    # output_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
+    # label_preprocess(label_path, output_path)
+
     # 经过lungmask Unet-R231模型分割后的肺部区域标图像
-    data_root_path = "/data/zengnanrong/R231/"
+    # data_root_path = "/data/zengnanrong/R231/"
+    # label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
+    # output_path = os.path.join(data_root_path, 'label_match_ct_4_range.xlsx')
+    # find_lung_range(label_path, data_root_path, output_path)
+
     # 分割后的肺部CT图像
-    # data_root_path = "/data/zengnanrong/LUNG_SEG/"
-
-    label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
-    output_path = os.path.join(data_root_path, 'label_match_ct_4_range.xlsx')
-
-    find_lung_range(label_path, data_root_path, output_path)
-    # data = load_datapath_label(data_root_path, label_path, False)
-    # print(len(data[0]))
-    # print(len(data[1]))
-    # print(len(data[2]))
-    # print(len(data[3]))
-    # print(len(data[0])+len(data[1])+len(data[2])+len(data[3]))
+    data_root_path = "/data/zengnanrong/LUNG_SEG/"
+    label_path = os.path.join(data_root_path, 'label_match_ct_4_range.xlsx')
+    data = load_datapath_label(data_root_path, label_path, True)
+    print(len(data[0]))
+    print(len(data[1]))
+    print(len(data[2]))
+    print(len(data[3]))
+    print(len(data[0]) + len(data[1]) + len(data[2]) + len(data[3]))
