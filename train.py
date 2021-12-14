@@ -201,6 +201,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_root_path', type=str, help='输入数据的根路径')
     parser.add_argument('--cut', type=bool, help='是否只截取含肺区域图像')
+    parser.add_argument('--cut_6', type=bool, help='是否只截去上下1/6的图像')
     parser.add_argument('--use_gpu', type=bool, help='是否只截取含肺区域图像')
     parser.add_argument('--batch_size', type=int, help='batch size')
     parser.add_argument('--num_epochs', type=int, help='num of epochs')
@@ -213,7 +214,7 @@ if __name__ == '__main__':
 
     label_path = os.path.join(args.data_root_path, 'label_match_ct_4_range.xlsx')
 
-    data = load_datapath_label(args.data_root_path, label_path, args.cut)
+    data = load_datapath_label(args.data_root_path, label_path, args.cut, args.cut_6)
     train_data = []
     valid_data = []
     test_data = []
@@ -272,6 +273,7 @@ if __name__ == '__main__':
   nohup python train.py \
  --data_root_path /data/zengnanrong/LUNG_SEG/ \
  --cut True \
+ --cut_6 False \
  --use_gpu True \
  --batch_size 20 \
  --num_epochs 30 \
@@ -279,4 +281,17 @@ if __name__ == '__main__':
  --result_file ./result/test_seg_cut_30epoch.xlsx \
  --cuda_device 1 \
  > ./log/out_seg_cut_30epoch.log &
+ 
+ 方案四：截取上下1/6的图像
+   nohup python train.py \
+ --data_root_path /data/zengnanrong/LUNG_SEG/ \
+ --cut False \
+ --cut_6 True \
+ --use_gpu True \
+ --batch_size 20 \
+ --num_epochs 30 \
+ --save_model_name DenseNet121_seg_cut6_30epoch.pkl \
+ --result_file ./result/test_seg_cut6_30epoch.xlsx \
+ --cuda_device 0 \
+ > ./log/out_seg_cut6_30epoch.log &
 """

@@ -86,7 +86,7 @@ def find_lung_range(label_path, data_root_path, output_path):
     label_df.to_excel(output_path, index=False)
 
 
-def load_datapath_label(data_root_path, label_path, cut):
+def load_datapath_label(data_root_path, label_path, cut, cut_6):
     """
     加载每一张DICOM图像的路径，并为其加上对应标签
     :param data_root_path:
@@ -124,6 +124,11 @@ def load_datapath_label(data_root_path, label_path, cut):
                         disappear_idx = disappear_idx + 1
 
                     files = files[appear_idx:disappear_idx + 1]
+                if cut_6:
+                    files.sort()
+                    start_idx = int(len(files) / 6)
+                    end_idx = len(files) - start_idx
+                    files = files[start_idx:end_idx]
 
                 for item in files:
                     if '.dcm' in item.lower():

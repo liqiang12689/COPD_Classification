@@ -3,12 +3,12 @@ import pandas as pd
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
-# diabetes = pd.read_excel('./result/test_cut6_25epoch.xlsx')
-diabetes = pd.read_excel('./result/test_seg_cut6_25epoch.xlsx')
+diabetes = pd.read_excel('./result/test_cut_30epoch.xlsx')
+# diabetes = pd.read_excel('./result/test_30epoch.xlsx')
 fact = diabetes['label_gt']
 guess = diabetes['label-pre']
 
-print("每个类别的精确率和召回率：", classification_report(fact, guess))
+print("每个类别的精确率和召回率：\n", classification_report(fact, guess))
 
 # 混淆矩阵
 classes = list(set(fact))
