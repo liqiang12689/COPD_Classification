@@ -135,7 +135,7 @@ def load_datapath_label(data_root_path, label_path, cut, cut_6):
                         image_path = os.path.join(root, item)
                         # 训练时预测的标签范围为[0,3]
                         label = label_df['GOLDCLA'][i] - 1
-                        data_path_with_label[label].append({'image_path': image_path, 'label': label})
+                        data_path_with_label[label].append({'image_path': image_path, 'label': label, 'dir': os.path.split(root)[1]})
 
     return data_path_with_label
 
@@ -164,9 +164,10 @@ if __name__ == "__main__":
     # 分割后的肺部CT图像
     data_root_path = "/data/zengnanrong/LUNG_SEG/"
     label_path = os.path.join(data_root_path, 'label_match_ct_4_range.xlsx')
-    data = load_datapath_label(data_root_path, label_path, True)
-    print(len(data[0]))
-    print(len(data[1]))
-    print(len(data[2]))
-    print(len(data[3]))
-    print(len(data[0]) + len(data[1]) + len(data[2]) + len(data[3]))
+    data = load_datapath_label(data_root_path, label_path, False, True)
+    print(data[0][0])
+    # print(len(data[0]))
+    # print(len(data[1]))
+    # print(len(data[2]))
+    # print(len(data[3]))
+    # print(len(data[0]) + len(data[1]) + len(data[2]) + len(data[3]))

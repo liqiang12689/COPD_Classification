@@ -16,7 +16,7 @@ from global_settings import CHECKPOINT_PATH, LOG_DIR, TIME_NOW
 import argparse
 
 
-def next_batch(batch_size, index_in_total, data):
+def next_batch(batch_size, index_in_total, data, test):
     start = index_in_total
     index_in_total += batch_size
     total_num = len(data)
@@ -29,6 +29,7 @@ def next_batch(batch_size, index_in_total, data):
 
     batch_images = []
     batch_labels = []
+    batch_dirs = []
 
     for i in range(start, end):
         if i < total_num:
@@ -39,7 +40,10 @@ def next_batch(batch_size, index_in_total, data):
             label = data[i]['label']
             batch_labels.append(label)
 
-    return batch_images, batch_labels, index_in_total
+            if test:
+                batch_dirs.append(data[i]['dir'])
+
+    return batch_images, batch_labels, batch_dirs, index_in_total
 
 
 def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimizer, criterion, save_model_name):
@@ -70,7 +74,8 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
             batch_num = int(len(train_data) / batch_size) + 1
 
         for batch in range(batch_num):
-            batch_images, batch_labels, index_in_trainset = next_batch(batch_size, index_in_trainset, train_data)
+            batch_images, batch_labels, _, index_in_trainset = next_batch(batch_size, index_in_trainset, train_data,
+                                                                          False)
             batch_images = torch.tensor(batch_images, dtype=torch.float)
 
             if use_gpu:
@@ -110,8 +115,8 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
                 batch_num = int(len(valid_data) / batch_size) + 1
 
             for batch in range(batch_num):
-                batch_images, batch_labels, index_in_validset = next_batch(batch_size, index_in_validset,
-                                                                           valid_data)
+                batch_images, batch_labels, _, index_in_validset = next_batch(batch_size, index_in_validset,
+                                                                              valid_data, False)
                 batch_images = torch.tensor(batch_images, dtype=torch.float)
 
                 if use_gpu:
@@ -155,6 +160,7 @@ def test(use_gpu, test_data, batch_size, save_model_name, result_file):
     label_list = []
     outpres_list = []
     prelabels_list = []
+    dirs_list = []
 
     net = torch.load(os.path.join(CHECKPOINT_PATH, save_model_name))
     net = net.eval()
@@ -166,8 +172,8 @@ def test(use_gpu, test_data, batch_size, save_model_name, result_file):
             batch_num = int(len(test_data) / batch_size) + 1
 
         for batch in range(batch_num):
-            batch_images, batch_labels, index_in_testset = next_batch(batch_size, index_in_testset,
-                                                                      test_data)
+            batch_images, batch_labels, batch_dirs, index_in_testset = next_batch(batch_size, index_in_testset,
+                                                                                  test_data, True)
             batch_images = torch.tensor(batch_images, dtype=torch.float)
 
             if use_gpu:
@@ -188,13 +194,26 @@ def test(use_gpu, test_data, batch_size, save_model_name, result_file):
             label_list.extend(batch_labels.cpu().numpy().tolist())
             outpres_list.extend(output_softmax.cpu().numpy().tolist())
             prelabels_list.extend(pred_label.cpu().numpy().tolist())
+            dirs_list.extend(batch_dirs)
 
         print("Test Acc: %f" % (test_acc / len(test_data)))
 
         df = pd.DataFrame(outpres_list, columns=['p0', 'p1', 'p2', 'p3'])
         df.insert(df.shape[1], 'label-pre', prelabels_list)
         df.insert(df.shape[1], 'label_gt', label_list)
+        df.insert(df.shape[1], 'dirs', dirs_list)
         df.to_excel(result_file, index=False)
+
+
+def count_person_result(input_file, output_file):
+    """
+    将每个病例的所有测试图像的四个等级的预测概率求平均
+    :param input_file:
+    :param output_file:
+    :return:
+    """
+    # TODO
+    pass
 
 
 if __name__ == '__main__':
@@ -240,8 +259,8 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
     criterion = nn.CrossEntropyLoss()
 
-    train(net, args.use_gpu, train_data, valid_data, args.batch_size, args.num_epochs, optimizer, criterion,
-          args.save_model_name)
+    # train(net, args.use_gpu, train_data, valid_data, args.batch_size, args.num_epochs, optimizer, criterion,
+    #       args.save_model_name)
     test(args.use_gpu, test_data, args.batch_size, args.save_model_name, args.result_file)
 
 """
@@ -253,9 +272,9 @@ if __name__ == '__main__':
  --batch_size 20 \
  --num_epochs 30 \
  --save_model_name DenseNet121_30epoch.pkl \
- --result_file ./result/test_30epoch.xlsx \
+ --result_file ./result/test_30epoch_dir.xlsx \
  --cuda_device 1 \
- > ./log/out_30epoch.log &
+ > ./log/out_30epoch_dir.log &
  
  方案二：删去非肺区域的图像
   nohup python train.py \
@@ -265,9 +284,9 @@ if __name__ == '__main__':
  --batch_size 20 \
  --num_epochs 30 \
  --save_model_name DenseNet121_cut_30epoch.pkl \
- --result_file ./result/test_cut_30epoch.xlsx \
+ --result_file ./result/test_cut_30epoch_dir.xlsx \
  --cuda_device 0 \
- > ./log/out_cut_30epoch.log &
+ > ./log/out_cut_30epoch_dir.log &
  
  方案三：提取肺实质图像
   nohup python train.py \
