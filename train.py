@@ -202,7 +202,7 @@ def test(use_gpu, test_data, batch_size, save_model_name, result_file):
         df.insert(df.shape[1], 'label-pre', prelabels_list)
         df.insert(df.shape[1], 'label_gt', label_list)
         df.insert(df.shape[1], 'dirs', dirs_list)
-        df.to_excel(result_file, index=False)
+        df.to_excel(result_file)
 
 
 def count_person_result(input_file, output_file):
@@ -212,42 +212,84 @@ def count_person_result(input_file, output_file):
     :param output_file:
     :return:
     """
-    # TODO
-    pass
+    input_df = pd.read_excel(input_file, sheet_name='Sheet1')
+    input_sort_df = input_df.sort_values(by='dirs')
+
+    output_list = []
+    count = 0
+    temp_row = [0.0, 0.0, 0.0, 0.0, 0, 0, 'test']
+    for i in range(len(input_sort_df['dirs'])):
+        temp_row[0] = temp_row[0] + input_sort_df['p0'][i]
+        temp_row[1] = temp_row[1] + input_sort_df['p1'][i]
+        temp_row[2] = temp_row[2] + input_sort_df['p2'][i]
+        temp_row[3] = temp_row[3] + input_sort_df['p3'][i]
+        count = count + 1
+
+        if i + 1 < len(input_sort_df['dirs']) and input_sort_df['dirs'][i] is not input_sort_df['dirs'][i + 1]:
+            temp_row[0] = temp_row[0] / count
+            temp_row[1] = temp_row[1] / count
+            temp_row[2] = temp_row[2] / count
+            temp_row[3] = temp_row[3] / count
+            temp_row[4] = temp_row[:4].index(max(temp_row[:4]))
+            temp_row[5] = input_sort_df['label_gt'][i]
+            temp_row[6] = input_sort_df['dirs'][i]
+            output_list.append(temp_row)
+
+            count = 0
+            temp_row = [0.0, 0.0, 0.0, 0.0, 0, 0, 'test']
+
+        if i + 1 == len(input_sort_df['dirs']):
+            # last line
+            temp_row[0] = temp_row[0] / count
+            temp_row[1] = temp_row[1] / count
+            temp_row[2] = temp_row[2] / count
+            temp_row[3] = temp_row[3] / count
+            temp_row[4] = temp_row[:4].index(max(temp_row[:4]))
+            temp_row[5] = input_sort_df['label_gt'][i]
+            temp_row[6] = input_sort_df['dirs'][i]
+            output_list.append(temp_row)
+
+    df = pd.DataFrame(output_list, columns=['p0', 'p1', 'p2', 'p3', 'label-pre', 'label_gt', 'dirs'])
+    df.to_excel(output_file)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_root_path', type=str, help='输入数据的根路径')
-    parser.add_argument('--cut', type=bool, help='是否只截取含肺区域图像')
-    parser.add_argument('--cut_6', type=bool, help='是否只截去上下1/6的图像')
-    parser.add_argument('--use_gpu', type=bool, help='是否只截取含肺区域图像')
+    parser.add_argument('--cut', type=bool, help='是否只截取含肺区域图像(精筛)')
+    parser.add_argument('--cut_6', type=bool, help='是否只截去上下1/6的图像(粗筛)')
+    parser.add_argument('--use_gpu', type=bool, help='是否只使用GPU')
     parser.add_argument('--batch_size', type=int, help='batch size')
     parser.add_argument('--num_epochs', type=int, help='num of epochs')
     parser.add_argument('--save_model_name', type=str, help='model save name')
     parser.add_argument('--result_file', type=str, help='test result file path')
-    parser.add_argument('--cuda_device', type=str, help='CUDA_VISIBLE_DEVICES')
+    parser.add_argument('--cuda_device', type=str, choices=['0', '1'], help='使用哪块GPU')
 
     argsin = sys.argv[1:]
     args = parser.parse_args(argsin)
 
-    label_path = os.path.join(args.data_root_path, 'label_match_ct_4_range.xlsx')
+    train_valid_label_path = '/data/zengnanrong/label_match_ct_4_range_train_valid.xlsx'
+    test_label_path = '/data/zengnanrong/label_match_ct_4_range_test.xlsx'
 
-    data = load_datapath_label(args.data_root_path, label_path, args.cut, args.cut_6)
+    train_valid_data_root_path = os.path.join(args.data_root_path, 'train_valid')
+    test_data_root_path = os.path.join(args.data_root_path, 'test')
+
+    train_valid_datapath_label = load_datapath_label(train_valid_data_root_path, train_valid_label_path, args.cut, args.cut_6)
+    test_datapath_label = load_datapath_label(test_data_root_path, test_label_path, args.cut, args.cut_6)
     train_data = []
     valid_data = []
     test_data = []
 
     for label in range(4):
-        random.shuffle(data[label])
+        random.shuffle(train_valid_datapath_label[label])
+        random.shuffle(test_datapath_label[label])
 
         # 每个标签的数据按 训练集：验证集：测试集 6:1:3
-        train_index = int(len(data[label]) * 0.6)
-        valid_index = int(len(data[label]) * 0.7)
+        train_index = int(len(train_valid_datapath_label[label]) * 6 / 7)
 
-        train_data.extend(data[label][:train_index])
-        valid_data.extend(data[label][train_index:valid_index])
-        test_data.extend(data[label][valid_index:])
+        train_data.extend(train_valid_datapath_label[label][:train_index])
+        valid_data.extend(train_valid_datapath_label[label][train_index:])
+        test_data.extend(test_datapath_label[label])
 
     channels = 1
     out_features = 4  # 4分类
@@ -259,58 +301,65 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
     criterion = nn.CrossEntropyLoss()
 
-    # train(net, args.use_gpu, train_data, valid_data, args.batch_size, args.num_epochs, optimizer, criterion,
-    #       args.save_model_name)
+    train(net, args.use_gpu, train_data, valid_data, args.batch_size, args.num_epochs, optimizer, criterion,
+          args.save_model_name)
     test(args.use_gpu, test_data, args.batch_size, args.save_model_name, args.result_file)
+
+    # count_person_result('./result/test_50epoch_dir.xlsx', './result/test_50epoch_dir_person.xlsx')
+    # count_person_result('./result/test_cut_50epoch_dir.xlsx', './result/test_cut_50epoch_dir_person.xlsx')
+    # count_person_result('./result/test_seg_cut_50epoch_dir.xlsx', './result/test_seg_cut_50epoch_dir_person.xlsx')
+    # count_person_result('./result/test_seg_cut6_50epoch_dir.xlsx', './result/test_seg_cut6_50epoch_dir_person.xlsx')
 
 """
 方案一：不处理数据
  nohup python train.py \
  --data_root_path /data/zengnanrong/CTDATA/ \
  --cut False \
+ --cut_6 False \
  --use_gpu True \
  --batch_size 20 \
- --num_epochs 30 \
- --save_model_name DenseNet121_30epoch.pkl \
- --result_file ./result/test_30epoch_dir.xlsx \
+ --num_epochs 50 \
+ --save_model_name DenseNet121_50epoch.pkl \
+ --result_file ./result/test_50epoch_dir.xlsx \
  --cuda_device 1 \
- > ./log/out_30epoch_dir.log &
+ > ./log/out_50epoch_dir.log &
  
  方案二：删去非肺区域的图像
   nohup python train.py \
  --data_root_path /data/zengnanrong/CTDATA/ \
  --cut True \
+ --cut_6 False \
  --use_gpu True \
  --batch_size 20 \
- --num_epochs 30 \
- --save_model_name DenseNet121_cut_30epoch.pkl \
- --result_file ./result/test_cut_30epoch_dir.xlsx \
- --cuda_device 0 \
- > ./log/out_cut_30epoch_dir.log &
+ --num_epochs 50 \
+ --save_model_name DenseNet121_cut_50epoch.pkl \
+ --result_file ./result/test_cut_50epoch_dir.xlsx \
+ --cuda_device 1 \
+ > ./log/out_cut_50epoch_dir.log &
  
- 方案三：提取肺实质图像
+ 方案三：提取肺实质图像_精筛
   nohup python train.py \
  --data_root_path /data/zengnanrong/LUNG_SEG/ \
  --cut True \
  --cut_6 False \
  --use_gpu True \
  --batch_size 20 \
- --num_epochs 30 \
- --save_model_name DenseNet121_seg_cut_30epoch.pkl \
- --result_file ./result/test_seg_cut_30epoch.xlsx \
+ --num_epochs 50 \
+ --save_model_name DenseNet121_seg_cut_50epoch.pkl \
+ --result_file ./result/test_seg_cut_50epoch_dir.xlsx \
  --cuda_device 1 \
- > ./log/out_seg_cut_30epoch.log &
+ > ./log/out_seg_cut_50epoch_dir.log &
  
- 方案四：截取上下1/6的图像
+ 方案四：提取肺实质图像_粗筛
    nohup python train.py \
  --data_root_path /data/zengnanrong/LUNG_SEG/ \
  --cut False \
  --cut_6 True \
  --use_gpu True \
  --batch_size 20 \
- --num_epochs 30 \
- --save_model_name DenseNet121_seg_cut6_30epoch.pkl \
- --result_file ./result/test_seg_cut6_30epoch.xlsx \
- --cuda_device 0 \
- > ./log/out_seg_cut6_30epoch.log &
+ --num_epochs 50 \
+ --save_model_name DenseNet121_seg_cut6_50epoch.pkl \
+ --result_file ./result/test_seg_cut6_50epoch_dir.xlsx \
+ --cuda_device 1 \
+ > ./log/out_seg_cut6_50epoch_dir.log &
 """

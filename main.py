@@ -10,7 +10,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 
-# import pandas as pd
+import pandas as pd
+
+list = [0, 0]
+list[0] = list[0] + 1
+list[1] = list[1] + 2
+print(list)
+# list.append([0.3, 0.5, 0.1, 0.1, 0, 1, 'E001'])
+# list.append([0.3, 0.4, 0.1, 0.2, 0, 1, 'E002'])
+# list[0][4] = list[0][:4].index(max(list[0][:4]))
+# list[1][4] = list[1][:4].index(max(list[1][:4]))
+# df = pd.DataFrame(list, columns=['p0', 'p1', 'p2', 'p3', 'label_pre', 'label_gt', 'dirs'])
+# df.to_excel("./result/test.xlsx", index=False)
+
 # data_root_path = "/data/zengnanrong/CTDATA/"
 # label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
 # output_path = os.path.join(data_root_path, 'label_match_ct_4_1496v2.xlsx')

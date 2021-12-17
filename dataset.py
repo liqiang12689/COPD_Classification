@@ -16,7 +16,7 @@ def label_preprocess(label_path, output_path):
     :return:
     """
 
-    label_data = pd.read_excel(os.path.join(label_path), sheet_name='Sheet1')
+    label_data = pd.read_excel(label_path, sheet_name='Sheet1')
 
     for i in range(len(label_data['subject'])):
         version_num = int(label_data['subject'][i][9]) - 1
@@ -26,8 +26,8 @@ def label_preprocess(label_path, output_path):
             # 将级别5的改为级别4，使得级别4的样本数与级别1-3的基本相同
             label_data['GOLDCLA'][i] = 4
 
-    label_data.sort_values(by='subject')
-    pd.DataFrame(label_data).to_excel(os.path.join(output_path), sheet_name='Sheet1')
+    # label_data = label_data.sort_values(by='subject')
+    pd.DataFrame(label_data).to_excel(output_path, sheet_name='Sheet1')
 
 
 def exist_lung(image_path):
@@ -55,7 +55,7 @@ def find_lung_range(label_path, data_root_path, output_path):
     # 确保与label文件中的名称顺序对应
     ct_dir.sort()
 
-    label_df = pd.read_excel(os.path.join(label_path), sheet_name='Sheet1')
+    label_df = pd.read_excel(label_path, sheet_name='Sheet1')
     label_df.insert(label_df.shape[1], 'appear_index', 0)
     label_df.insert(label_df.shape[1], 'disappear_index', 0)
 
@@ -83,7 +83,7 @@ def find_lung_range(label_path, data_root_path, output_path):
                         label_df['disappear_index'][i] = disappear_index
                         break
 
-    label_df.to_excel(output_path, index=False)
+    label_df.to_excel(output_path)
 
 
 def load_datapath_label(data_root_path, label_path, cut, cut_6):
@@ -102,7 +102,7 @@ def load_datapath_label(data_root_path, label_path, cut, cut_6):
     # 确保与label文件中的名称顺序对应
     ct_dir.sort()
 
-    label_df = pd.read_excel(os.path.join(label_path), sheet_name='Sheet1')
+    label_df = pd.read_excel(label_path, sheet_name='Sheet1')
 
     data_path_with_label = [[], [], [], []]
 
@@ -135,7 +135,8 @@ def load_datapath_label(data_root_path, label_path, cut, cut_6):
                         image_path = os.path.join(root, item)
                         # 训练时预测的标签范围为[0,3]
                         label = label_df['GOLDCLA'][i] - 1
-                        data_path_with_label[label].append({'image_path': image_path, 'label': label, 'dir': os.path.split(root)[1]})
+                        data_path_with_label[label].append(
+                            {'image_path': image_path, 'label': label, 'dir': os.path.split(root)[1]})
 
     return data_path_with_label
 
@@ -150,24 +151,24 @@ def load_data(path):
 
 if __name__ == "__main__":
     # 肺部CT原始图像
-    # data_root_path = "/data/zengnanrong/CTDATA/"
+    # data_root_path = "/data/zengnanrong"
     # label_path = os.path.join(data_root_path, 'label.xlsx')
     # output_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
     # label_preprocess(label_path, output_path)
 
     # 经过lungmask Unet-R231模型分割后的肺部区域标图像
     # data_root_path = "/data/zengnanrong/R231/"
-    # label_path = os.path.join(data_root_path, 'label_match_ct_4.xlsx')
-    # output_path = os.path.join(data_root_path, 'label_match_ct_4_range.xlsx')
+    # label_path = '/data/zengnanrong/label_match_ct_4.xlsx'
+    # output_path = '/data/zengnanrong/label_match_ct_4_range.xlsx'
     # find_lung_range(label_path, data_root_path, output_path)
 
     # 分割后的肺部CT图像
-    data_root_path = "/data/zengnanrong/LUNG_SEG/"
-    label_path = os.path.join(data_root_path, 'label_match_ct_4_range.xlsx')
-    data = load_datapath_label(data_root_path, label_path, False, True)
+    data_root_path = "/data/zengnanrong/LUNG_SEG/train_valid/"
+    label_path = '/data/zengnanrong/label_match_ct_4_range_train_valid.xlsx'
+    data = load_datapath_label(data_root_path, label_path, False, False)
     print(data[0][0])
-    # print(len(data[0]))
-    # print(len(data[1]))
-    # print(len(data[2]))
-    # print(len(data[3]))
-    # print(len(data[0]) + len(data[1]) + len(data[2]) + len(data[3]))
+    print(len(data[0]))
+    print(len(data[1]))
+    print(len(data[2]))
+    print(len(data[3]))
+    print(len(data[0]) + len(data[1]) + len(data[2]) + len(data[3]))
