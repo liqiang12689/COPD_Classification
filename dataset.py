@@ -26,7 +26,7 @@ def label_preprocess(label_path, output_path):
             # 将级别5的改为级别4，使得级别4的样本数与级别1-3的基本相同
             label_data['GOLDCLA'][i] = 4
 
-    # label_data = label_data.sort_values(by='subject')
+    label_data.sort_values(by='subject', inplace=True)
     pd.DataFrame(label_data).to_excel(output_path, sheet_name='Sheet1')
 
 

@@ -3,6 +3,12 @@ import pandas as pd
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
+from train import count_person_result
+
+count_person_result('./result/test_60epoch_dir.xlsx', './result/test_60epoch_dir_person.xlsx')
+# count_person_result('./result/test_cut_50epoch_dir.xlsx', './result/test_cut_50epoch_dir_person.xlsx')
+# count_person_result('./result/test_seg_cut_50epoch_dir.xlsx', './result/test_seg_cut_50epoch_dir_person.xlsx')
+# count_person_result('./result/test_seg_cut6_50epoch_dir.xlsx', './result/test_seg_cut6_50epoch_dir_person.xlsx')
 
 diabetes = pd.read_excel('./result/test_50epoch_dir_person.xlsx')
 # diabetes = pd.read_excel('./result/test_cut_50epoch_dir_person.xlsx')
