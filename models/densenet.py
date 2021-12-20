@@ -2,8 +2,8 @@ import torch
 from torchvision import models
 
 
-def densenet121(channels, out_features, use_gpu, pretrained):
-    model = models.densenet121(pretrained=pretrained)
+def densenet121(channels, out_features, use_gpu, pretrained, drop_rate):
+    model = models.densenet121(pretrained=pretrained, drop_rate=drop_rate)
 
     for parma in model.parameters():
         parma.requires_grad = False

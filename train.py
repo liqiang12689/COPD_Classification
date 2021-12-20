@@ -274,7 +274,8 @@ if __name__ == '__main__':
     train_valid_data_root_path = os.path.join(args.data_root_path, 'train_valid')
     test_data_root_path = os.path.join(args.data_root_path, 'test')
 
-    train_valid_datapath_label = load_datapath_label(train_valid_data_root_path, train_valid_label_path, args.cut, args.cut_6)
+    train_valid_datapath_label = load_datapath_label(train_valid_data_root_path, train_valid_label_path, args.cut,
+                                                     args.cut_6)
     test_datapath_label = load_datapath_label(test_data_root_path, test_label_path, args.cut, args.cut_6)
     train_data = []
     valid_data = []
@@ -297,10 +298,11 @@ if __name__ == '__main__':
     channels = 1
     out_features = 4  # 4分类
     pretrained = False  # 是否使用已训练模型
+    drop_rate = 0.5  # 防止过拟合
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.cuda_device
 
-    net = densenet121(channels, out_features, args.use_gpu, pretrained)
+    net = densenet121(channels, out_features, args.use_gpu, pretrained, drop_rate)
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
     criterion = nn.CrossEntropyLoss()
 
@@ -315,11 +317,11 @@ if __name__ == '__main__':
  --cut_6 False \
  --use_gpu True \
  --batch_size 20 \
- --num_epochs 60 \
- --save_model_name DenseNet121_60epoch.pkl \
- --result_file ./result/test_60epoch_dir.xlsx \
+ --num_epochs 40 \
+ --save_model_name DenseNet121_40epoch.pkl \
+ --result_file ./result/test_40epoch_dir.xlsx \
  --cuda_device 1 \
- > ./log/out_60epoch_dir.log &
+ > ./log/out_40epoch_dir.log &
  
  方案二：删去非肺区域的图像
   nohup python train.py \
