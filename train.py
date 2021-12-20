@@ -139,10 +139,10 @@ def train(net, use_gpu, train_data, valid_data, batch_size, num_epochs, optimize
                    train_acc / len(train_data), valid_loss / len(valid_data),
                    valid_acc / len(valid_data)))
 
-        writer.add_scalar('Train Loss', train_loss / len(train_data), epoch + 1)
-        writer.add_scalar('Train Acc', train_acc / len(train_data), epoch + 1)
-        writer.add_scalar('Valid loss', valid_loss / len(valid_data), epoch + 1)
-        writer.add_scalar('Valid Acc', valid_acc / len(valid_data), epoch + 1)
+        writer.add_scalars('Loss', {'Train': train_loss / len(train_data), 'Valid': valid_loss / len(valid_data)},
+                           epoch + 1)
+        writer.add_scalars('Accuracy', {'Train': train_acc / len(train_data), 'Valid': valid_acc / len(valid_data)},
+                           epoch + 1)
 
         if valid_acc / len(valid_data) > max_vail_acc:
             max_vail_acc = valid_acc / len(valid_data)
@@ -255,15 +255,17 @@ def count_person_result(input_file, output_file):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_root_path', type=str, help='输入数据的根路径')
-    parser.add_argument('--cut', type=bool, help='是否只截取含肺区域图像(精筛)')
-    parser.add_argument('--cut_6', type=bool, help='是否只截去上下1/6的图像(粗筛)')
-    parser.add_argument('--use_gpu', type=bool, help='是否只使用GPU')
-    parser.add_argument('--batch_size', type=int, help='batch size')
-    parser.add_argument('--num_epochs', type=int, help='num of epochs')
-    parser.add_argument('--save_model_name', type=str, help='model save name')
-    parser.add_argument('--result_file', type=str, help='test result file path')
-    parser.add_argument('--cuda_device', type=str, choices=['0', '1'], help='使用哪块GPU')
+    parser.add_argument('--data_root_path', type=str, default='/data/zengnanrong/CTDATA/', help='输入数据的根路径')
+    parser.add_argument('--cut', type=bool, default=False, help='是否只截取含肺区域图像(精筛)')
+    parser.add_argument('--cut_6', type=bool, default=False, help='是否只截去上下1/6的图像(粗筛)')
+    parser.add_argument('--use_gpu', type=bool, default=True, help='是否只使用GPU')
+    parser.add_argument('--batch_size', type=int, default=16, help='batch size')
+    parser.add_argument('--num_epochs', type=int, default=50, help='num of epochs')
+    parser.add_argument('--save_model_name', type=str, default='DenseNet121_50epoch_16batchsize.pkl',
+                        help='model save name')
+    parser.add_argument('--result_file', type=str, default='./result/test_50epoch_16batchsize_dir.xlsx',
+                        help='test result file path')
+    parser.add_argument('--cuda_device', type=str, choices=['0', '1'], default='1', help='使用哪块GPU')
 
     argsin = sys.argv[1:]
     args = parser.parse_args(argsin)
@@ -303,7 +305,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = args.cuda_device
 
     net = densenet121(channels, out_features, args.use_gpu, pretrained, drop_rate)
-    optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(net.parameters(), lr=3e-4)
     criterion = nn.CrossEntropyLoss()
 
     train(net, args.use_gpu, train_data, valid_data, args.batch_size, args.num_epochs, optimizer, criterion,
@@ -311,20 +313,20 @@ if __name__ == '__main__':
     test(args.use_gpu, test_data, args.batch_size, args.save_model_name, args.result_file)
 """
 方案一：不处理数据
- nohup python train.py \
+ nohup python -u train.py \
  --data_root_path /data/zengnanrong/CTDATA/ \
  --cut False \
  --cut_6 False \
  --use_gpu True \
  --batch_size 20 \
- --num_epochs 40 \
- --save_model_name DenseNet121_40epoch.pkl \
- --result_file ./result/test_40epoch_dir.xlsx \
+ --num_epochs 50 \
+ --save_model_name DenseNet121_50epoch_lr.pkl \
+ --result_file ./result/test_50epoch_lr_dir.xlsx \
  --cuda_device 1 \
- > ./log/out_40epoch_dir.log &
+ > ./log/out_50epoch_lr.log &
  
  方案二：删去非肺区域的图像
-  nohup python train.py \
+  nohup python -u train.py \
  --data_root_path /data/zengnanrong/CTDATA/ \
  --cut True \
  --cut_6 False \
@@ -337,7 +339,7 @@ if __name__ == '__main__':
  > ./log/out_cut_50epoch_dir.log &
  
  方案三：提取肺实质图像_精筛
-  nohup python train.py \
+  nohup python -u train.py \
  --data_root_path /data/zengnanrong/LUNG_SEG/ \
  --cut True \
  --cut_6 False \
@@ -350,7 +352,7 @@ if __name__ == '__main__':
  > ./log/out_seg_cut_50epoch_dir.log &
  
  方案四：提取肺实质图像_粗筛
-   nohup python train.py \
+   nohup python -u train.py \
  --data_root_path /data/zengnanrong/LUNG_SEG/ \
  --cut False \
  --cut_6 True \

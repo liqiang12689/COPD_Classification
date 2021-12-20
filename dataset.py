@@ -163,10 +163,14 @@ if __name__ == "__main__":
     # find_lung_range(label_path, data_root_path, output_path)
 
     # 分割后的肺部CT图像
+    # data_root_path = "/data/zengnanrong/R231/"
+    # label_path = '/data/zengnanrong/label_match_ct_4_range.xlsx'
+    # data_root_path = "/data/zengnanrong/LUNG_SEG/test/"
+    # label_path = '/data/zengnanrong/label_match_ct_4_range_test.xlsx'
     data_root_path = "/data/zengnanrong/LUNG_SEG/train_valid/"
     label_path = '/data/zengnanrong/label_match_ct_4_range_train_valid.xlsx'
     data = load_datapath_label(data_root_path, label_path, False, False)
-    print(data[0][0])
+    # print(data[0][0])
     print(len(data[0]))
     print(len(data[1]))
     print(len(data[2]))
