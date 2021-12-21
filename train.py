@@ -288,10 +288,8 @@ if __name__ == '__main__':
         train_index = int(len(train_valid_datapath_label[label]) * 6 / 7)
 
         while train_valid_datapath_label[label][train_index]['dir'] == \
-                train_valid_datapath_label[label][train_index + 1]['dir']:
-            train_index = train_index + 1
-
-        train_index = train_index + 1
+                train_valid_datapath_label[label][train_index - 1]['dir']:
+            train_index = train_index - 1
 
         train_data.extend(train_valid_datapath_label[label][:train_index])
         valid_data.extend(train_valid_datapath_label[label][train_index:])
